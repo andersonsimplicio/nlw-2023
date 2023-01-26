@@ -1,4 +1,5 @@
-import { PrismaClient, Prisma } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
+
 const prisma = new PrismaClient()
 
 const firstHabitId = '0730ffac-d039-4194-9571-01aa2aa0efbd'
@@ -10,94 +11,131 @@ const secondHabitCreationDate = new Date('2023-01-03T03:00:00.000')
 const thirdHabitId = 'fa1a1bcf-3d87-4626-8c0d-d7fd1255ac00'
 const thirdHabitCreationDate = new Date('2023-01-08T03:00:00.000')
 
-const habitData:Prisma.HabitCreateInput[] = [
-    {
-    id:firstHabitId,  
-    title:'Estudar TypeScript',
-    create_at: firstHabitCreationDate ,
-    weeksDays:{
-      create:[
-        {week_day:1},
-        {week_day:2},
-        {week_day:3}
-      ]
-    }
-    },
-    {
-      id:secondHabitId,
-      title:'Estudar Estatística',
-      create_at: secondHabitCreationDate ,
-      weeksDays:{
-        create:[
-          {week_day:1},
-          {week_day:2},
-          {week_day:3},
-          {week_day:4},
-          {week_day:5},
-        ]
+async function run() {
+  await prisma.habitWeekDays.deleteMany()
+  await prisma.dayHabit.deleteMany()
+  await prisma.day.deleteMany()
+  await prisma.habit.deleteMany()
+ 
+
+  /**
+   * Create habits
+   */
+  await Promise.all([
+    prisma.habit.create({
+      data: {
+        id: firstHabitId,
+        title: 'Beber 2L água',
+        create_at: firstHabitCreationDate,
+        weeksDays: {
+          create: [
+            { week_day: 1 },
+            { week_day: 2 },
+            { week_day: 3 },
+          ]
+        }
       }
-    },
-    {
-      id:thirdHabitId,
-      title:'Estudar Inteligência Artificial',
-      create_at: thirdHabitCreationDate,
-      weeksDays:{
-        create:[
-          {week_day:1},
-          {week_day:2},
-          {week_day:3},
-          {week_day:4},
-          {week_day:5},
-        ]
+    }),
+
+    prisma.habit.create({
+      data: {
+        id: secondHabitId,
+        title: 'Exercitar',
+        create_at: secondHabitCreationDate,
+        weeksDays: {
+          create: [
+            { week_day: 3 },
+            { week_day: 4 },
+            { week_day: 5 },
+          ]
+        }
       }
-    }
-]
-const daysData:Prisma.DayCreateInput[] =[
-  { /** Monday */
+    }),
+
+    prisma.habit.create({
+      data: {
+        id: thirdHabitId,
+        title: 'Dormir 8h',
+        create_at: thirdHabitCreationDate,
+        weeksDays: {
+          create: [
+            { week_day: 1 },
+            { week_day: 2 },
+            { week_day: 3 },
+            { week_day: 4 },
+            { week_day: 5 },
+          ]
+        }
+      }
+    })
+  ])
+
+  await Promise.all([
+    /**
+     * Habits (Complete/Available): 1/1
+     */
+    prisma.day.create({
+      data: {
+        /** Monday */
         date: new Date('2023-01-02T03:00:00.000z'),
         dayHabits: {
           create: {
             habit_id: firstHabitId,
           }
         }
-  },
-  {
-    /** Friday */
-    date: new Date('2023-01-06T03:00:00.000z'),
-          dayHabits: {
-            create: {
-              habit_id: firstHabitId,
-            }
-    }
-  },
-  { /** Wednesday */
-    date:new Date('2023-01-04T03:00:00.000z'),
-    dayHabits: {
-      create: [
-      {habit_id: firstHabitId},
-      { habit_id: secondHabitId }
-    ]
-    }
-  }
-]
+      }
+    }),
 
+    /**
+     * Habits (Complete/Available): 1/1
+     */
+    prisma.day.create({
+      data: {
+        /** Friday */
+        date: new Date('2023-01-06T03:00:00.000z'),
+        dayHabits: {
+          create: {
+            habit_id: firstHabitId,
+          }
+        }
+      }
+    }),
 
-
-async function main() {
-    await prisma.dayHabit.deleteMany()
-    await prisma.habitWeekDays.deleteMany()
-    await prisma.day.deleteMany()
-    await prisma.habit.deleteMany() 
-    for(const habit of habitData){
-      await prisma.habit.create({data:habit,})
-    }
-    for(const dia of daysData){
-      await prisma.day.create({data:dia,})
-    }
+    /**
+     * Habits (Complete/Available): 2/2
+     */
+    prisma.day.create({
+      data: {
+        /** Wednesday */
+        date: new Date('2023-01-04T03:00:00.000z'),
+        dayHabits: {
+          create: [
+            { habit_id: firstHabitId },
+            { habit_id: secondHabitId },
+          ]
+        }
+      }
+    }),
+     /**
+     * Habits (Complete/Available): 2/2
+     */
+     prisma.day.create({
+      data: {
+        /** Wednesday */
+        date: new Date('2023-01-16T03:00:00.000z'),
+        dayHabits: {
+          create: [
+            { habit_id: firstHabitId },
+            { habit_id: secondHabitId },
+            { habit_id: thirdHabitId },
+          ]
+        }
+      }
+    }),
+  ])
 }
 
- 
-main()
+run()
   .then(async () => {
     await prisma.$disconnect()
   })
